@@ -1,4 +1,6 @@
-package med.voll.api.paciente;
+package med.voll.api.dtos;
+
+import med.voll.api.entities.Paciente;
 
 public record DadosListagemPaciente(Long id, String nome, String email, String cpf) {
     public DadosListagemPaciente(Paciente paciente) {
