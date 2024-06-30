@@ -25,7 +25,7 @@ public class AgendaDeConsultas {
     @Autowired
     private List<ValidadorAgendamentoDeConsulta> validadores;
 
-    public void agendar(DadosAgendamentoConsulta dados) {
+    public DadosDetalhamentoConsulta agendar(DadosAgendamentoConsulta dados) {
         if (!this.pacienteRepository.existsById(dados.idPaciente()))  {
             throw new ValidacaoException("Id do paciente informado não existe");
         }
@@ -40,8 +40,9 @@ public class AgendaDeConsultas {
         validadores.forEach(v -> v.validar(dados));
 
         var consulta = getConsulta(dados);
-
         this.consultaRepository.save(consulta);
+
+        return new DadosDetalhamentoConsulta(consulta);
     }
 
     public void cancelar(DadosCancelamentoConsulta dados) {
@@ -68,6 +69,12 @@ public class AgendaDeConsultas {
             throw new ValidacaoException("Especialidade é obrigatória quando médico não for informado");
         }
 
-        return this.medicoRepository.escolherMedicoAleatorioLivreNaData(dados.especialidade(), dados.data());
+        var medico = this.medicoRepository.escolherMedicoAleatorioLivreNaData(dados.especialidade(), dados.data());
+
+        if (medico == null) {
+            throw new ValidacaoException("Não existe médico disponível nessa data");
+        }
+
+        return medico;
     }
 }
