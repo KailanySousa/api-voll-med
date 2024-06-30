@@ -1,11 +1,14 @@
 package med.voll.api.domain.consulta;
 
 import med.voll.api.domain.ValidacaoException;
+import med.voll.api.domain.consulta.validacoes.ValidadorAgendamentoDeConsulta;
 import med.voll.api.domain.medico.Medico;
 import med.voll.api.domain.medico.MedicoRepository;
 import med.voll.api.domain.paciente.PacienteRepository;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
+
+import java.util.List;
 
 @Service
 public class AgendaDeConsultas {
@@ -19,9 +22,23 @@ public class AgendaDeConsultas {
     @Autowired
     private PacienteRepository pacienteRepository;
 
-    public void agendar(DadosAgendamentoConsulta dados) {
+    @Autowired
+    private List<ValidadorAgendamentoDeConsulta> validadores;
 
-        this.verificarDados(dados);
+    public void agendar(DadosAgendamentoConsulta dados) {
+        if (!this.pacienteRepository.existsById(dados.idPaciente()))  {
+            throw new ValidacaoException("Id do paciente informado não existe");
+        }
+
+        if (dados.idMedico() != null && !this.medicoRepository.existsById(dados.idMedico()))  {
+            throw new ValidacaoException("Id do médico informado não existe");
+        }
+
+        // S (Princípio da Responsabilidade Única)
+        // O (Princípio aberto-fechado)
+        // D (Princípio da inversão de dependência)
+        validadores.forEach(v -> v.validar(dados));
+
         var consulta = getConsulta(dados);
 
         this.consultaRepository.save(consulta);
@@ -40,16 +57,6 @@ public class AgendaDeConsultas {
         var medico = this.escolherMedico(dados);
         var paciente = this.pacienteRepository.getReferenceById(dados.idPaciente());
         return new Consulta(null, medico, paciente, dados.data(), null);
-    }
-
-    private void verificarDados(DadosAgendamentoConsulta dados) {
-        if (!this.pacienteRepository.existsById(dados.idPaciente()))  {
-            throw new ValidacaoException("Id do paciente informado não existe");
-        }
-
-        if (dados.idMedico() != null && !this.medicoRepository.existsById(dados.idMedico()))  {
-            throw new ValidacaoException("Id do médico informado não existe");
-        }
     }
 
     private Medico escolherMedico(DadosAgendamentoConsulta dados) {
