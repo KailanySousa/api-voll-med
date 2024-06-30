@@ -1,5 +1,7 @@
 package med.voll.api.domain.consulta;
 
+import med.voll.api.domain.ValidacaoException;
+import med.voll.api.domain.medico.Medico;
 import med.voll.api.domain.medico.MedicoRepository;
 import med.voll.api.domain.paciente.PacienteRepository;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -19,9 +21,25 @@ public class AgendaDeConsultas {
 
     public void agendar(DadosAgendamentoConsulta dados) {
 
-        var medico = this.medicoRepository.findById(dados.idMedico()).get();
+        if (!this.pacienteRepository.existsById(dados.idPaciente()))  {
+            throw new ValidacaoException("Id do paciente informado não existe");
+        }
+
+        if (dados.idMedico() != null && !this.medicoRepository.existsById(dados.idMedico()))  {
+            throw new ValidacaoException("Id do médico informado não existe");
+        }
+
+        var medico = this.escolherMedico(dados);
         var paciente = this.pacienteRepository.findById(dados.idPaciente()).get();
         var consulta = new Consulta(null, medico, paciente, dados.data());
         this.consultaRepository.save(consulta);
+    }
+
+    private Medico escolherMedico(DadosAgendamentoConsulta dados) {
+        if (dados.idMedico() != null) {
+            return this.medicoRepository.findById(dados.idMedico()).get();
+        }
+
+        return new Medico();
     }
 }
