@@ -30,6 +30,7 @@ build/
 !**/src/test/**/build/
 
 environment.properties
+environment-prod.properties
 
 ### VS Code ###
 .vscode/
